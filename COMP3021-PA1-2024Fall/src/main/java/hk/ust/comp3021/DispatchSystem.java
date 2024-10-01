@@ -1,5 +1,13 @@
 package hk.ust.comp3021;
 
+import hk.ust.comp3021.rank.CustomerPriorityRank;
+import hk.ust.comp3021.rank.OrderCreateTimeRank;
+import hk.ust.comp3021.rank.RestaurantToCustomerDistanceRank;
+
+import java.io.*;
+import java.math.BigDecimal;
+import java.util.*;
+
 public class DispatchSystem {
 
     /// The singleton you will use in the project.
@@ -21,17 +29,41 @@ public class DispatchSystem {
     /// Hint: Check if the dispatchSystem is null or not null, skip it when not null. Initialize the fields.
 
     private DispatchSystem() {
+        if (dispatchSystem == null) {
+            availableDishes = new ArrayList<Dish>();
+            availableOrders = new ArrayList<Order>();
+            dispatchedOrders = new ArrayList<Order>();
+        }
+        else return;
     }
 
     /// Task 1: Implement the getInstance() method for the singleton pattern.
     /// Hint: Check if the dispatchSystem is null or not null and create a new instance here.
     public static DispatchSystem getInstance() {
+        if (dispatchSystem == null) {
+            dispatchSystem = new DispatchSystem();
+        }
+        return dispatchSystem;
     }
 
     public Dish getDishById(Long id) {
+        for (Dish d : availableDishes) {
+            if (d.getId().equals(id)) {return d;}
+        }
+        return null;
     }
 
     public Boolean checkDishesInRestaurant(Restaurant restaurant, Long[] dishIds) {
+        for (int i = 0; i < dishIds.length; i++) {
+            boolean found = false;
+            for (Dish d : restaurant.getDishes()) {
+                if (d.getId().equals(dishIds[i])) {
+                    found = true;
+                }
+            }
+            if (!found) {return false;}
+        }
+        return true;
     }
 
     /// Task 2: Implement the parseAccounts() method to parse the accounts from the file.
@@ -54,9 +86,71 @@ public class DispatchSystem {
                     fields[i] = fields[i].trim();
                 }
 
+                String id = fields[0];
                 String accountType = fields[1];
+                String name = fields[2];
+                String contactNumber = fields[3];
+                fields[4] = fields[4].replace("[", "").replace("]", "");
+                String[] locationSplit = fields[4].split(" ");
+                Location location = new Location(Double.parseDouble(locationSplit[0]),
+                                                 Double.parseDouble(locationSplit[1]));
 
                 // TODO.
+
+                switch (accountType) {
+                    case "CUSTOMER" -> {
+
+                        String customerType = fields[5];
+                        String gender = fields[6];
+                        String email = fields[7];
+
+                        Customer c = new Customer(
+                                Long.parseLong(id),
+                                name,
+                                contactNumber,
+                                location,
+                                Integer.parseInt(customerType),
+                                gender,
+                                email);
+
+                        c.register();
+                    }
+                    case "RESTAURANT" -> {
+
+                        String district = fields[5];
+                        String street = fields[6];
+
+                        Restaurant r = new Restaurant(
+                                Long.parseLong(id),
+                                name,
+                                contactNumber,
+                                location,
+                                district,
+                                street);
+
+                        r.register();
+                    }
+                    case "RIDER" -> {
+
+                        String gender = fields[5];
+                        String status = fields[6];
+                        String userRating = fields[7];
+                        String monthTaskCount = fields[8];
+
+                        Rider r = new Rider(
+                                Long.parseLong(id),
+                                name,
+                                contactNumber,
+                                location,
+                                gender,
+                                Integer.parseInt(status),
+                                Double.parseDouble(userRating),
+                                Integer.parseInt(monthTaskCount));
+
+                        r.register();
+                    }
+                    default -> throw new IOException("Wrong Account Type!");
+                }
 
             }
         }
@@ -80,6 +174,20 @@ public class DispatchSystem {
 
                 // TODO.
 
+                String id = fields[0];
+                String name = fields[1];
+                String desc = fields[2];
+                String price = fields[3];
+                String restaurantId = fields[4];
+
+                Dish d = new Dish(
+                        Long.parseLong(id),
+                        name, desc,
+                        BigDecimal.valueOf(Long.parseLong(price)),
+                        Long.parseLong(restaurantId));
+
+                availableDishes.add(d);
+                Restaurant.getRestaurantById(Long.parseLong(restaurantId)).addDish(d);
             }
         }
     }
@@ -102,6 +210,45 @@ public class DispatchSystem {
 
                 // TODO.
 
+                String id = fields[0];
+                String status = fields[1];
+                String restaurantId = fields[2];
+                String customerId = fields[3];
+                String createTime = fields[4];
+                String isPayed = fields[5];
+                String dishes = fields[6];
+                String riderId = fields[7];
+
+                dishes = dishes.replace("[", "").replace("]", "");
+                String[] dishesSplit = dishes.split(" ");
+                List<Dish> dishesList = new ArrayList<Dish>();
+                Long[] dishIds = new Long[dishesSplit.length];
+                for (int i = 0; i < dishesSplit.length; i++) {
+                    dishIds[i] = Long.parseLong(dishesSplit[i]);
+                }
+
+                if (checkDishesInRestaurant(Restaurant.getRestaurantById(Long.parseLong(restaurantId)), dishIds)) {
+                    for (Long ids : dishIds) {
+                        dishesList.add(getDishById(ids));
+                    }
+
+                    Rider rider = null;
+                    if (!riderId.equals("NA")) rider = Rider.getRiderById(Long.parseLong(riderId));
+
+                    Order o = new Order(
+                            Long.parseLong(id),
+                            Integer.parseInt(status),
+                            Restaurant.getRestaurantById(Long.parseLong(restaurantId)),
+                            Customer.getCustomerById(Long.parseLong(customerId)),
+                            Long.parseLong(createTime),
+                            Boolean.parseBoolean(isPayed),
+                            dishesList,
+                            rider
+                            );
+
+                    availableOrders.add(o);
+                }
+
             }
         }
     }
@@ -109,11 +256,26 @@ public class DispatchSystem {
     /// Task 5: Implement the getAvailablePendingOrders() method to get the available pending orders.
     /// Hint: The available pending orders should have the status of PENDING_ORDER, is payed, and the rider is null.
     public List<Order> getAvailablePendingOrders() {
+        List<Order> result = new ArrayList<Order>();
+        for (Order o : availableOrders) {
+            if (o.getStatus() == Constants.PENDING_ORDER && o.getIsPayed() && o.getRider() == null) {
+                result.add(o);
+            }
+        }
+        return result;
     }
 
     /// Task 6: Implement the getRankedPendingOrders() method to rank the pending orders.
     /// Hint: Use the comparators you defined before, and sort the pending orders in order of the customer type (Top priority), order creation time (Second priority), and restaurant to customer distance (Least priority).
     public List<Order> getRankedPendingOrders(List<Order> pendingOrders) {
+        List<Order> result = getAvailablePendingOrders();
+
+        result.sort(
+                new CustomerPriorityRank().thenComparing(
+                    new OrderCreateTimeRank().thenComparing(
+                        new RestaurantToCustomerDistanceRank())));
+
+        return result;
     }
 
     /// Task 7: Implement the getAvailableRiders() method to get the available riders to dispatch.
