@@ -426,17 +426,17 @@ public class DispatchSystem {
     /// Finish the main method to test your implementation.a
     public static void main(String[] args) {
         try {
-            getInstance().parseAccounts("C:\\Users\\yier9\\IdeaProjects\\COMP3021_PA1\\COMP3021-PA1-2024Fall\\SampleInputAccounts.txt");
-            getInstance().parseDishes("C:\\Users\\yier9\\IdeaProjects\\COMP3021_PA1\\COMP3021-PA1-2024Fall\\SampleInputDishes.txt");
-            getInstance().parseOrders("C:\\Users\\yier9\\IdeaProjects\\COMP3021_PA1\\COMP3021-PA1-2024Fall\\SampleInputOrders.txt");
-            getInstance().writeOrders("availableOrders.txt", getInstance().availableOrders);
+            getInstance().parseAccounts("SampleInputAccounts.txt");
+            getInstance().parseDishes("SampleInputDishes.txt");
+            getInstance().parseOrders("SampleInputOrders.txt");
+            getInstance().writeOrders("Second_availableOrders.txt", getInstance().availableOrders);
 
             getInstance().dispatchFirstRound();
 
-            getInstance().writeOrders("firstRoundDispatchedOrders.txt", getInstance().dispatchedOrders);
+            getInstance().writeOrders("Second_firstRoundDispatchedOrders.txt", getInstance().dispatchedOrders);
             List<Order> timeoutOrders = getInstance().getTimeoutDispatchedOrders();
 
-            getInstance().writeOrders("timeoutDispatchedOrders.txt", timeoutOrders);
+            getInstance().writeOrders("Second_timeoutDispatchedOrders.txt", timeoutOrders);
 
         } catch (IOException exception) {
             exception.printStackTrace();
