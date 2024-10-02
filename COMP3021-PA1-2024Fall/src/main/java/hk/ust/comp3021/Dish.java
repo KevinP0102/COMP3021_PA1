@@ -37,5 +37,14 @@ public class Dish {
         return desc;
     }
 
-
+    @Override
+    public String toString() {
+        return "Dish(" +
+                "id=" + id +
+                ", name=" + name +
+                ", desc=" + desc +
+                ", price=" + price +
+                ", restaurantId=" + restaurantId +
+                ')';
+    }
 }

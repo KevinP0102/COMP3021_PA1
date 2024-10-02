@@ -37,9 +37,11 @@ public abstract class Account {
             return registeredAccounts;
         }
 
+        public List<Rider> getRegisteredRiders() { return registeredRiders; }
+
         public Account getAccountById(Long id) {
             for (Account account : registeredAccounts) {
-                if (account.getId().equals(id)) {return account}
+                if (account.getId().equals(id)) {return account; }
             }
             return null;
         }
@@ -55,7 +57,7 @@ public abstract class Account {
 
         public Customer getCustomerById(Long id) {
             for (Customer customer : registeredCustomers) {
-                if (customer.getId().equals(id)) {return customer}
+                if (customer.getId().equals(id)) {return customer; }
             }
             return null;
         }
@@ -67,7 +69,7 @@ public abstract class Account {
 
         public Restaurant getRestaurantById(Long id) {
             for (Restaurant restaurant : registeredRestaurants) {
-                if (restaurant.getId().equals(id)) {return restaurant}
+                if (restaurant.getId().equals(id)) {return restaurant; }
             }
             return null;
         }
@@ -79,7 +81,7 @@ public abstract class Account {
 
         public Rider getRiderById(Long id) {
             for (Rider rider : registeredRiders) {
-                if (rider.getId().equals(id)) {return rider}
+                if (rider.getId().equals(id)) {return rider; }
             }
             return null;
         }

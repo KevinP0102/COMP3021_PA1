@@ -8,6 +8,12 @@ public class RiderMonthTaskCountRank implements TaskRank {
 
     @Override
     public int compare(Task source, Task target) {
-        return 0;
+        if (source.getRider().getMonthTaskCount() < target.getRider().getMonthTaskCount()) {
+            return -1;
+        } else if (source.getRider().getMonthTaskCount() > target.getRider().getMonthTaskCount()) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 }

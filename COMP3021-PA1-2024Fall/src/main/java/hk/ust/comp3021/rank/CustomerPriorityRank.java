@@ -8,8 +8,8 @@ public class CustomerPriorityRank implements PendingOrderRank {
         if (source.getCustomer().getCustomerType().equals(target.getCustomer().getCustomerType())) {
             return 0;
         } else if (source.getCustomer().getCustomerType() < target.getCustomer().getCustomerType()) {
-            return 1;
-        } else
             return -1;
+        } else
+            return 1;
     }
 }

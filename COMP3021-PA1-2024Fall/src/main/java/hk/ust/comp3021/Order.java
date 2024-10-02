@@ -22,10 +22,13 @@ public class Order {
         this.isPayed = isPayed;
         this.dishes = dishes;
         this.rider = rider;
-        this.estimatedTime = (double) 0;
+        this.estimatedTime = null;
     }
 
-    public Double calculateEstimatedTime() {}
+    public Double calculateEstimatedTime() {
+        return this.customer.getLocation().distanceTo(this.restaurant.getLocation()) / 4 +
+                this.restaurant.getLocation().distanceTo(this.rider.getLocation()) / 4;
+    }
 
     public Long getId() {
         return id;
@@ -61,5 +64,32 @@ public class Order {
 
     public Double getEstimatedTime() {
         return estimatedTime;
+    }
+
+    public void setEstimatedTime(Double estimatedTime) {
+        this.estimatedTime = estimatedTime;
+    }
+
+    public void setRider(Rider rider) {
+        this.rider = rider;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    @Override
+    public String toString() {
+        return "Order(" +
+                "id=" + id +
+                ", status=" + status +
+                ", restaurant=" + restaurant +
+                ", customer=" + customer +
+                ", createTime=" + createTime +
+                ", isPayed=" + isPayed +
+                ", dishes=" + dishes +
+                ", rider=" + rider +
+                ", estimatedTime=" + estimatedTime +
+                ')';
     }
 }

@@ -8,6 +8,6 @@ public class RestaurantToCustomerDistanceRank implements PendingOrderRank{
         Double sourceDistance = source.getRestaurant().getLocation().distanceTo(source.getCustomer().getLocation());
         Double targetDistance = target.getRestaurant().getLocation().distanceTo(target.getCustomer().getLocation());
 
-        return sourceDistance.compareTo(targetDistance);
+        return -sourceDistance.compareTo(targetDistance);
     }
 }

@@ -8,6 +8,13 @@ public class RiderRatingRank implements TaskRank {
 
     @Override
     public int compare(Task source, Task target) {
-        return 0;
+        if (source.getRider().getUserRating() > target.getRider().getUserRating()) {
+            return -1;
+        } else if (source.getRider().getUserRating() < target.getRider().getUserRating()) {
+            return 1;
+        } else {
+            return 0;
+        }
+
     }
 }

@@ -1,8 +1,6 @@
 package hk.ust.comp3021;
 
-import hk.ust.comp3021.rank.CustomerPriorityRank;
-import hk.ust.comp3021.rank.OrderCreateTimeRank;
-import hk.ust.comp3021.rank.RestaurantToCustomerDistanceRank;
+import hk.ust.comp3021.rank.*;
 
 import java.io.*;
 import java.math.BigDecimal;
@@ -183,7 +181,7 @@ public class DispatchSystem {
                 Dish d = new Dish(
                         Long.parseLong(id),
                         name, desc,
-                        BigDecimal.valueOf(Long.parseLong(price)),
+                        new BigDecimal(price),
                         Long.parseLong(restaurantId));
 
                 availableDishes.add(d);
@@ -216,6 +214,11 @@ public class DispatchSystem {
                 String customerId = fields[3];
                 String createTime = fields[4];
                 String isPayed = fields[5];
+                if (isPayed.equals("1")) {
+                    isPayed = "True";
+                } else if (isPayed.equals("0")) {
+                    isPayed = "False";
+                }
                 String dishes = fields[6];
                 String riderId = fields[7];
 
@@ -268,31 +271,69 @@ public class DispatchSystem {
     /// Task 6: Implement the getRankedPendingOrders() method to rank the pending orders.
     /// Hint: Use the comparators you defined before, and sort the pending orders in order of the customer type (Top priority), order creation time (Second priority), and restaurant to customer distance (Least priority).
     public List<Order> getRankedPendingOrders(List<Order> pendingOrders) {
-        List<Order> result = getAvailablePendingOrders();
 
-        result.sort(
+        pendingOrders.sort(
                 new CustomerPriorityRank().thenComparing(
                     new OrderCreateTimeRank().thenComparing(
                         new RestaurantToCustomerDistanceRank())));
 
-        return result;
+        return pendingOrders;
     }
 
     /// Task 7: Implement the getAvailableRiders() method to get the available riders to dispatch.
     /// Hint: The available riders should have the status of RIDER_ONLINE_ORDER.
     public List<Rider> getAvailableRiders() {
+        List<Rider> result = new ArrayList<Rider>();
+        for (Rider r : Account.accountManager.getRegisteredRiders()) {
+            if (r.getStatus().equals(Constants.RIDER_ONLINE_ORDER)) {
+                result.add(r);
+            }
+        }
+        return result;
     }
 
     /// Task 8: Implement the matchTheBestTask() method to choose the best rider for the order.
-    /// Hint: The best rider should have the highest rank ranked in order of the distance between the rider and the restaurant (Top priority), the rider's user rating (Second priority), and the rider's month task count (Least priority).
-    /// Use the comparators you defined before, you will also use the Task class here and the availableRiders here should be the currently available riders.
+    /// Hint: The best rider should have the highest rank ranked in order of the distance
+    /// between the rider and the restaurant (Top priority), the rider's user rating (Second priority),
+    /// and the rider's month task count (Least priority).
+    /// Use the comparators you defined before, you will also use the Task class here and
+    /// the availableRiders here should be the currently available riders.
     public Task matchTheBestTask(Order order, List<Rider> availableRiders) {
+        List<Task> taskList = new ArrayList<Task>();
+        for (Rider r : availableRiders) {
+            Task t = new Task(order, r);
+            taskList.add(t);
+        }
+
+        taskList.sort(
+                new RiderToRestaurantRank().thenComparing(
+                        new RiderRatingRank().thenComparing(
+                                new RiderMonthTaskCountRank())));
+
+
+        return taskList.get(0);
     }
 
     /// Task 9: Implement the dispatchFirstRound() method to dispatch the first round of orders.
     /// Hint: The strategy is that we assign the best rider to the orders ranked one by one until the orders or riders list is empty.
-    /// Do not forget to 1. remove the dispatched rider every iteration, 2. change the status of the order and the rider after the order is dispatched, and 3. calculate the estimated time for the order.
+    /// Do not forget to
+    /// 1. remove the dispatched rider every iteration,
+    /// 2. change the status of the order and the rider after the order is dispatched, and
+    /// 3. calculate the estimated time for the order.
     public void dispatchFirstRound() {
+        List<Order> rankedPendingOrders = getRankedPendingOrders(getAvailablePendingOrders());
+        List<Rider> availableRiders = getAvailableRiders();
+        for (Order o : rankedPendingOrders) {
+            if (!availableRiders.isEmpty()) {
+                Task t = matchTheBestTask(o, availableRiders);
+                availableRiders.remove(t.getRider());
+                dispatchedOrders.add(o);
+                t.getRider().setStatus(Constants.RIDER_DELIVERING);
+                t.getOrder().setStatus(Constants.DISPATCHED_ORDER);
+                t.getOrder().setRider(t.getRider());
+                t.getOrder().setEstimatedTime(t.getOrder().calculateEstimatedTime());
+            } else break;
+        }
     }
 
     /// Do not modify the method. You should use the method to output orders for us to check the correctness of your implementation.
@@ -352,6 +393,13 @@ public class DispatchSystem {
     /// Task 10: Implement the getTimeoutDispatchedOrders() method to get the timeout dispatched orders.
     /// Hint: Do not forget to take the current time stamp into consideration.
     public List<Order> getTimeoutDispatchedOrders() {
+        List<Order> timeoutOrdersList = new ArrayList<Order>();
+        for (Order o : dispatchedOrders) {
+            if (o.getEstimatedTime() + currentTimestamp - o.getCreateTime() > 1800.0) {
+                timeoutOrdersList.add(o);
+            }
+        }
+        return timeoutOrdersList;
     }
 
     /// Do not modify the method.
@@ -378,17 +426,17 @@ public class DispatchSystem {
     /// Finish the main method to test your implementation.a
     public static void main(String[] args) {
         try {
-            .parseAccounts("Accounts.txt");
-            .parseDishes("Dishes.txt");
-            .parseOrders("Orders.txt");
-            .writeOrders("availableOrders.txt", .availableOrders);
+            getInstance().parseAccounts("C:\\Users\\yier9\\IdeaProjects\\COMP3021_PA1\\COMP3021-PA1-2024Fall\\SampleInputAccounts.txt");
+            getInstance().parseDishes("C:\\Users\\yier9\\IdeaProjects\\COMP3021_PA1\\COMP3021-PA1-2024Fall\\SampleInputDishes.txt");
+            getInstance().parseOrders("C:\\Users\\yier9\\IdeaProjects\\COMP3021_PA1\\COMP3021-PA1-2024Fall\\SampleInputOrders.txt");
+            getInstance().writeOrders("availableOrders.txt", getInstance().availableOrders);
 
-            .dispatchFirstRound();
+            getInstance().dispatchFirstRound();
 
-            .writeOrders("firstRoundDispatchedOrders.txt", .dispatchedOrders);
-            List<Order> timeoutOrders = .getTimeoutDispatchedOrders();
+            getInstance().writeOrders("firstRoundDispatchedOrders.txt", getInstance().dispatchedOrders);
+            List<Order> timeoutOrders = getInstance().getTimeoutDispatchedOrders();
 
-            .writeOrders("timeoutDispatchedOrders.txt", timeoutOrders);
+            getInstance().writeOrders("timeoutDispatchedOrders.txt", timeoutOrders);
 
         } catch (IOException exception) {
             exception.printStackTrace();
